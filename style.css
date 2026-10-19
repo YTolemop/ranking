@@ -21,3 +21,15 @@
 .intro{margin-bottom:24px}.intro h1{font-size:32px}.intro h1 br{display:none}.intro-note{gap:8px}.intro p{margin-bottom:0}main{padding-top:28px}
 @media(max-width:850px){.diagram-key{gap:12px;flex-direction:column;text-align:center}.intro h1{font-size:26px}.bracket-scroll{padding-left:16px;padding-right:16px}}
 @media print{#rounds{gap:50px}.round,.match{width:auto}.round{width:100%}.match{width:124px}.bracket-scroll{padding-top:30px}.diagram-key{padding-top:8px}.podium{padding:12px}.workspace{overflow:visible}.results-area{break-inside:avoid}}
+[hidden]{display:none!important}
+header{height:64px}.brand{font-size:20px}.account{display:flex;align-items:center;gap:12px}.account span{font-size:11px;color:#7b8b75}.account button{font-size:12px;padding:8px 12px}
+main{padding-top:20px}.setup{margin-bottom:18px;padding:16px 20px}.setup .title-field{max-width:440px}.workspace-head{padding:20px 24px;align-items:center}h2{font-size:22px;margin:0 0 10px}.hint{padding:10px 24px}
+.bracket-scroll{height:min(70vh,800px);min-height:360px;max-height:800px;overflow:auto;cursor:grab;touch-action:pan-x pan-y;overscroll-behavior:contain;scrollbar-width:auto;scrollbar-color:#a4b39a #f1f4ed;user-select:none;padding:44px 24px 26px}
+.bracket-scroll.dragging{cursor:grabbing}.bracket-scroll button{cursor:pointer}.bracket-scroll button:disabled{cursor:default}
+.match{width:164px}.match-label{font-size:11px;padding:7px 10px}.player{font-size:14px;height:42px;padding:10px}.player .badge{font-size:10px}
+#bronze{width:170px}#bronze .match{width:170px}
+.round-label{font-size:11px}.podium{max-width:560px;padding:16px 24px}.podium #podium{margin:0}.place strong{font-size:18px}.place{padding:10px 12px}
+#empty{padding:70px 24px;text-align:center;color:#809075;font-size:14px}
+#login-dialog input{width:100%;display:block;margin-top:9px;border:1px solid #cbd6c4;border-radius:6px;padding:12px;font-size:15px}#login-dialog label{font-size:12px;display:block;margin-top:22px}#login-form>div{display:flex;justify-content:flex-end;gap:10px}
+@media(max-width:850px){main{padding:16px 12px}.setup{gap:12px;padding:16px}.workspace-head{padding:18px;align-items:stretch;gap:15px}.hint{padding:10px 18px;font-size:10px}.account{gap:8px}.account span{font-size:10px}.bracket-scroll{height:65vh;min-height:360px}.toolbar{gap:6px}.toolbar button{padding:8px 10px}}
+@media print{.account,#setup,#empty{display:none!important}.bracket-scroll{height:auto;min-height:0;max-height:none;overflow:visible;padding:35px 0 20px}#rounds{gap:58px}.match{width:164px}#bronze .match{width:170px}.workspace-head{padding:0 0 10px}}
