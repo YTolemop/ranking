@@ -10,6 +10,7 @@ function applyAccess(){
  ['title','count','draw'].forEach(id=>$(id).disabled=busy||!canEdit);
  $('login').hidden=shared&&canEdit;$('logout').hidden=!shared||!canEdit;
  $('mode').textContent=shared?(canEdit?'管理者':'公開檢視'):'本機模式';
+ document.querySelector('.hint>span').textContent=canEdit?'拖曳空白處移動 · 點選選手晉級':'拖曳空白處移動查看';
  $('export').disabled=!state;$('print').disabled=!state;$('view').disabled=!state;
  $('migrate').hidden=!shared||!canEdit||!!state||!localBackup;
 }

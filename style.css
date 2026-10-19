@@ -33,3 +33,6 @@ main{padding-top:20px}.setup{margin-bottom:18px;padding:16px 20px}.setup .title-
 #login-dialog input{width:100%;display:block;margin-top:9px;border:1px solid #cbd6c4;border-radius:6px;padding:12px;font-size:15px}#login-dialog label{font-size:12px;display:block;margin-top:22px}#login-form>div{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:850px){main{padding:16px 12px}.setup{gap:12px;padding:16px}.workspace-head{padding:18px;align-items:stretch;gap:15px}.hint{padding:10px 18px;font-size:10px}.account{gap:8px}.account span{font-size:10px}.bracket-scroll{height:65vh;min-height:360px}.toolbar{gap:6px}.toolbar button{padding:8px 10px}}
 @media print{.account,#setup,#empty{display:none!important}.bracket-scroll{height:auto;min-height:0;max-height:none;overflow:visible;padding:35px 0 20px}#rounds{gap:58px}.match{width:164px}#bronze .match{width:170px}.workspace-head{padding:0 0 10px}}
+
+.hint{flex-wrap:wrap}#saved{display:inline;font-size:10px}
+@media print{#saved{display:none}}
