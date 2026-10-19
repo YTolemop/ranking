@@ -23,5 +23,6 @@
  }
  function select(s,id,winner){const result=compute(s),m=[...result.rounds.flat(),result.bronze].find(m=>m&&m.id===id);if(!m||m.auto||!m.a.ready||!m.b.ready||![m.a.value,m.b.value].includes(winner))throw Error('此場次尚無法選擇');s.picks[id]={winner,signature:m.signature};return compute(s)}
  function validate(raw){if(!raw||raw.version!==1||!Number.isInteger(raw.n)||raw.n<2||raw.n>128||typeof raw.title!=='string'||raw.title.length>80||!Array.isArray(raw.slots)||raw.slots.length!==2**Math.ceil(Math.log2(raw.n)))throw Error('備份格式不正確');const ids=raw.slots.filter(v=>v!==null).sort((a,b)=>a-b);if(ids.length!==raw.n||ids.some((v,i)=>v!==i+1))throw Error('選手編號不完整');for(let i=0;i<raw.slots.length;i+=2)if(raw.slots[i]===null&&raw.slots[i+1]===null)throw Error('長籤配置不正確');const clean={version:1,title:raw.title,n:raw.n,slots:[...raw.slots],picks:{}};if(raw.picks&&typeof raw.picks==='object')for(const [k,v] of Object.entries(raw.picks))if(/^(r\d+m\d+|bronze)$/.test(k)&&v&&typeof v.signature==='string'&&Number.isInteger(v.winner))clean.picks[k]={signature:v.signature,winner:v.winner};compute(clean);return clean}
- const api={create,compute,select,validate};if(typeof module!=='undefined')module.exports=api;else root.Bracket=api;
+ function pending(result){return [...result.rounds.flat(),result.bronze].filter(m=>m&&!m.ready&&!m.auto&&m.a.ready&&m.b.ready&&m.a.value!==null&&m.b.value!==null)}
+ const api={create,compute,select,validate,pending};if(typeof module!=='undefined')module.exports=api;else root.Bracket=api;
 })(globalThis);

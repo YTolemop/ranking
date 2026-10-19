@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id),KEY='bracket-club-v1',shared=Cloud.configured;
-let state=null,localBackup=null,history=[],toastTimer,busy=false,canEdit=!shared,revision=0,lastWidth='',cloudReady=false,refreshing=false;
+let state=null,localBackup=null,history=[],toastTimer,busy=false,canEdit=!shared,revision=0,lastWidth='',cloudReady=false,refreshing=false,pendingMatches=[],focusedMatch='';
 try{const saved=localStorage.getItem(KEY);if(saved)localBackup=Bracket.validate(JSON.parse(saved));}catch{}
 if(!shared)state=localBackup||Bracket.create(15);
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4000)}
@@ -15,6 +15,7 @@ function applyAccess(){
  $('migrate').hidden=!shared||!canEdit||!!state||!localBackup;
 }
 function showEmpty(){
+ $('pending-panel').hidden=true;pendingMatches=[];focusedMatch='';
  $('bracket').hidden=true;$('podium').replaceChildren();$('stats').replaceChildren();$('event-title').textContent='賽程表';$('empty').hidden=false;
  $('empty').textContent=cloudReady?(canEdit?'尚無賽程，請抽籤建立或匯入備份。':'尚未公布賽程。'):'正在讀取共用賽程…';
 }
@@ -23,6 +24,26 @@ function ask(title,text,action){$('confirm-title').textContent=title;$('confirm-
 $('cancel').onclick=()=>$('confirm').close();
 function label(n){return `${String(n).padStart(2,'0')} 號`}
 function center(){const el=$('bracket').parentElement;el.scrollLeft=(el.scrollWidth-el.clientWidth)/2;el.scrollTop=0}
+function renderPending(result){
+ pendingMatches=Bracket.pending(result);if(!pendingMatches.some(m=>m.id===focusedMatch))focusedMatch='';
+ $('pending-panel').hidden=false;$('pending-title').textContent=pendingMatches.length?`待打對局 · ${pendingMatches.length} 場`:'所有對局已完成';
+ $('next-match').disabled=!pendingMatches.length;$('pending-list').replaceChildren();
+ pendingMatches.forEach(m=>{
+  const card=document.querySelector(`[data-match="${m.id}"]`),button=document.createElement('button');button.className='pending-choice';
+  button.dataset.target=m.id;button.setAttribute('aria-controls',card.id);button.setAttribute('aria-pressed',String(m.id===focusedMatch));
+  const caption=document.createElement('small'),players=document.createElement('span');caption.textContent=card.querySelector('.match-label').textContent;players.textContent=`${label(m.a.value)} × ${label(m.b.value)}`;
+  button.append(caption,players);button.onclick=()=>focusMatch(m.id);$('pending-list').append(button);
+ });
+ document.querySelectorAll('.match').forEach(el=>el.classList.toggle('current-match',el.dataset.match===focusedMatch));
+}
+function focusMatch(id){
+ if(!pendingMatches.some(m=>m.id===id))return;
+ focusedMatch=id;document.querySelectorAll('.match').forEach(el=>el.classList.toggle('current-match',el.dataset.match===id));
+ document.querySelectorAll('.pending-choice').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.target===id)));
+ const card=document.getElementById(`match-${id}`),box=viewport.getBoundingClientRect(),rect=card.getBoundingClientRect(),behavior=matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';
+ viewport.scrollIntoView({behavior,block:'nearest'});viewport.scrollTo({left:viewport.scrollLeft+rect.left-box.left+(rect.width-viewport.clientWidth)/2,top:viewport.scrollTop+rect.top-box.top+(rect.height-viewport.clientHeight)/2,behavior});
+ card.focus({preventScroll:true});
+}
 async function refreshCloud(){
  if(!cloudReady||refreshing||busy)return;refreshing=true;
  try{const row=await Cloud.load();if(!busy&&row&&row.revision>revision){state=Bracket.validate(row.payload);revision=row.revision;history=[];render()}if(!busy)status('已同步')}
@@ -44,11 +65,11 @@ async function change(action,{undo=false}={}){
  }finally{busy=false;render()}
 }
 
-function matchCard(m,caption){const card=document.createElement('div');card.className='match';card.dataset.match=m.id;const cap=document.createElement('div');cap.className='match-label';cap.textContent=caption;card.append(cap);
+function matchCard(m,caption){const card=document.createElement('div');card.className='match';card.dataset.match=m.id;card.id=`match-${m.id}`;card.tabIndex=-1;card.setAttribute('role','group');card.setAttribute('aria-label',caption);const cap=document.createElement('div');cap.className='match-label';cap.textContent=caption;card.append(cap);
  [m.a,m.b].forEach((slot,i)=>{const btn=document.createElement('button');btn.className='player';const name=document.createElement('span'),badge=document.createElement('span');badge.className='badge';name.textContent=slot.ready?(slot.value===null?'輪空':label(slot.value)):'待前場勝者';badge.textContent=m.auto&&slot.value!==null?'長籤晉級':m.winner!==null&&slot.value===m.winner?'✓ 勝出':'';btn.classList.toggle('winner',m.ready&&m.winner!==null&&slot.value===m.winner);btn.classList.toggle('loser',m.ready&&!m.auto&&slot.value!==m.winner);btn.disabled=!canEdit||busy||m.auto||!m.a.ready||!m.b.ready||slot.value===null;btn.setAttribute('aria-label',`${caption}，${name.textContent}${!btn.disabled?'，點選為勝者':''}`);btn.setAttribute('aria-pressed',String(m.winner!==null&&slot.value===m.winner));btn.append(name,badge);btn.onclick=()=>{if(m.winner!==slot.value)change(()=>Bracket.select(state,m.id,slot.value))};card.append(btn)});return card}
 function render(){applyAccess(); if(!state){showEmpty();return;}$('empty').hidden=true;$('bracket').hidden=false;const result=Bracket.compute(state),rounds=result.rounds;document.title=`${state.title}｜晉級之路`;$('title').value=state.title;$('count').value=state.n;$('event-title').textContent=state.title;$('stats').replaceChildren();const total=state.n-1+(result.bronze?1:0),done=rounds.flat().filter(m=>m.ready&&!m.auto).length+(result.bronze?.ready?1:0);[`${state.n} 位參賽者`,`${state.slots.length-state.n} 支長籤`,'單淘汰',`${done} / ${total} 場完成`].forEach(t=>{const x=document.createElement('span');x.textContent=t;$('stats').append(x)});
  $('rounds').replaceChildren();rounds.forEach((matches,r)=>{const col=document.createElement('section');col.className='round';$('rounds').style.width=`${Math.max(900,rounds[0].length*188)}px`;const head=document.createElement('div');head.className='round-label';const remaining=rounds.length-r;head.textContent=remaining===1?'冠軍決定賽':remaining===2?'準決賽':remaining===3?'八強賽':`第 ${r+1} 輪`;const count=document.createElement('small');count.textContent=`${matches.length} 場`;head.append(count);const body=document.createElement('div');body.className='matches';matches.forEach((m,i)=>body.append(matchCard(m,`${remaining===1?'冠軍賽':remaining===2?'準決賽':`第 ${r+1} 輪`} · ${String(i+1).padStart(2,'0')}`)));col.append(head,body);$('rounds').append(col)});
- $('bronze').replaceChildren();if(result.bronze){$('bronze').hidden=false;$('bronze').append(matchCard(result.bronze,'三、四名決定賽'));}else $('bronze').hidden=true;
+ $('bronze').replaceChildren();if(result.bronze){$('bronze').hidden=false;$('bronze').append(matchCard(result.bronze,'三、四名決定賽'));}else $('bronze').hidden=true;renderPending(result);
  const final=rounds.at(-1)[0];$('podium').replaceChildren();[['冠軍',result.champion],['亞軍',final.ready?final.loser:null],['季軍',result.bronze?.ready?result.bronze.winner:null]].forEach(([rank,id])=>{const el=document.createElement('div');el.className='place';const small=document.createElement('small'),strong=document.createElement('strong');small.textContent=rank;strong.textContent=id?label(id):rank==='季軍'&&!result.bronze?'不適用':'待揭曉';el.append(small,strong);$('podium').append(el)});$('undo').disabled=busy||!history.length;$('clear').disabled=busy||!Object.keys(state.picks).length;requestAnimationFrame(()=>{connect();if(lastWidth!==$('rounds').style.width){lastWidth=$('rounds').style.width;center()}})}
 function connect(){
  const root=$('bracket'),svg=$('lines'),result=Bracket.compute(state),rounds=result.rounds;
@@ -70,6 +91,7 @@ function connect(){
 }
 
 $('view').onclick=center;
+$('next-match').onclick=()=>{if(pendingMatches.length){const index=pendingMatches.findIndex(m=>m.id===focusedMatch);focusMatch(pendingMatches[(index+1)%pendingMatches.length].id)}};
 $('draw').onclick=()=>{
  const n=Number($('count').value),title=$('title').value.trim()||'我的盃賽';
  if(!Number.isInteger(n)||n<2||n>128){toast('請輸入 2～128 之間的整數人數');$('count').focus();return}
